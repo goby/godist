@@ -15,7 +15,7 @@ import (
 )
 
 type BufferNode struct {
-	value []byte
+	value interface{}
 	next  *BufferNode
 }
 
@@ -29,7 +29,7 @@ func NewBuffer() *Buffer {
 	return &Buffer{size: 0, head: nil, tail: nil}
 }
 
-func (bp *Buffer) Insert(value []byte) {
+func (bp *Buffer) Insert(value interface{}) {
 	node := &BufferNode{value: value}
 	if bp.head == nil {
 		bp.head = node
@@ -41,7 +41,7 @@ func (bp *Buffer) Insert(value []byte) {
 	bp.size++
 }
 
-func (bp *Buffer) Front() ([]byte, error) {
+func (bp *Buffer) Front() (interface{}, error) {
 	if bp.head == nil {
 		err := errors.New("Empty Buffer")
 		return nil, err
@@ -50,12 +50,12 @@ func (bp *Buffer) Front() ([]byte, error) {
 	}
 }
 
-func (bp *Buffer) Remove() ([]byte, error) {
+func (bp *Buffer) Remove() (interface{}, error) {
 	if bp.head == nil {
 		err := errors.New("Empty Buffer")
 		return nil, err
 	} else {
-		var ret []byte = bp.head.value
+		var ret interface{} = bp.head.value
 		if bp.tail == bp.head {
 			bp.tail = nil
 		}

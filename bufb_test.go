@@ -2,7 +2,6 @@ package bufb
 
 import (
 	"encoding/json"
-	//"github.com/goby/godist/bufb"
 	"math/rand"
 	"testing"
 )
@@ -45,11 +44,12 @@ func runtest(t *testing.T, bp *Buffer) {
 			bp.Insert(i2b(inserted))
 			inserted++
 		} else {
-			b, err := bp.Remove()
+			x, err := bp.Remove()
 			if err != nil {
 				t.Logf("Attempt to remove from empty buffer.\n")
 				t.Fail()
 			}
+			b := x.([]byte)
 			v := b2i(b)
 			if v != removed {
 				t.Logf("Removed %d, Expected %d\n", v, removed)
