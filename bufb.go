@@ -1,3 +1,5 @@
+package bufb
+
 // DESCRIPTION
 //  Implementation of FIFO buffer using linked list + tailed pointer. Single-threaded operation.
 // FEATURE
@@ -7,29 +9,30 @@
 //  Remove: Get and remove first node from buffer
 //  Flush:  Clear buffer
 // ROADMAP
-//  TODO: Multi-threaded support
-package bufb
-
+//  Done: Multi-threaded support
 import (
 	"errors"
+	"sync"
 )
 
+// BufferNode
 type BufferNode struct {
 	value interface{}
 	next  *BufferNode
 }
 
-type Buffer struct {
+// Sequencial Buffer
+type SeqBuffer struct {
 	head *BufferNode
 	tail *BufferNode
 	size int
 }
 
-func NewBuffer() *Buffer {
-	return &Buffer{size: 0, head: nil, tail: nil}
+func NewSeqBuffer() *SeqBuffer {
+	return &SeqBuffer{size: 0, head: nil, tail: nil}
 }
 
-func (bp *Buffer) Insert(value interface{}) {
+func (bp *SeqBuffer) Insert(value interface{}) {
 	node := &BufferNode{value: value}
 	if bp.head == nil {
 		bp.head = node
@@ -41,7 +44,7 @@ func (bp *Buffer) Insert(value interface{}) {
 	bp.size++
 }
 
-func (bp *Buffer) Front() (interface{}, error) {
+func (bp *SeqBuffer) Front() (interface{}, error) {
 	if bp.head == nil {
 		err := errors.New("Empty Buffer")
 		return nil, err
@@ -50,7 +53,7 @@ func (bp *Buffer) Front() (interface{}, error) {
 	}
 }
 
-func (bp *Buffer) Remove() (interface{}, error) {
+func (bp *SeqBuffer) Remove() (interface{}, error) {
 	if bp.head == nil {
 		err := errors.New("Empty Buffer")
 		return nil, err
@@ -65,16 +68,64 @@ func (bp *Buffer) Remove() (interface{}, error) {
 	}
 }
 
-func (bp *Buffer) Flush() {
+func (bp *SeqBuffer) Flush() {
 	bp.head = nil
 	bp.tail = nil
 	bp.size = 0
 }
 
-func (bp *Buffer) Empty() bool {
+func (bp *SeqBuffer) Empty() bool {
 	return bp.size == 0
 }
 
-func (bp *Buffer) Size() int {
+func (bp *SeqBuffer) Size() int {
 	return bp.size
+}
+
+// Thread-safe Buffer
+type Buffer struct {
+	sb    *SeqBuffer
+	mutex *sync.Mutex
+	cvar  *sync.Cond
+}
+
+func NewBuffer() *Buffer {
+	bp := &Buffer{}
+	bp.sb = NewSeqBuffer()
+	bp.mutex = &sync.Mutex{}
+	bp.cvar = &sync.Cond{}
+	return bp
+}
+
+func (bp *Buffer) Insert(value interface{}) {
+	bp.mutex.Lock()
+	bp.sb.Insert(value)
+	bp.mutex.Unlock()
+}
+
+func (bp *Buffer) Remove() (interface{}, error) {
+	bp.mutex.Lock()
+	x, err := bp.sb.Remove()
+	bp.mutex.Unlock()
+	return x, err
+}
+
+func (bp *Buffer) Flush() {
+	bp.mutex.Lock()
+	bp.sb.Flush()
+	bp.mutex.Unlock()
+}
+
+func (bp *Buffer) Size() int {
+	bp.mutex.Lock()
+	size := bp.sb.Size()
+	bp.mutex.Unlock()
+	return size
+}
+
+func (bp *Buffer) Empty() bool {
+	bp.mutex.Lock()
+	isempty := bp.sb.Empty()
+	bp.mutex.Unlock()
+	return isempty
 }
