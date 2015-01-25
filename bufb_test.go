@@ -19,7 +19,14 @@ func b2i(b []byte) int {
 }
 
 func TestBuffer(t *testing.T) {
-
+	for i := 0; i < 100; i++ {
+		bp := NewBuffer()
+		runtest(t, bp)
+		if !bp.Empty() {
+			t.Logf("Size %d. Expect empty.", bp.Size())
+			t.Fail()
+		}
+	}
 }
 
 func runtest(t *testing.T, bp *Buffer) {
