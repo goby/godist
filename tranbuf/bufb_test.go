@@ -1,4 +1,4 @@
-package bufb
+package tranbuf
 
 import (
 	"encoding/json"

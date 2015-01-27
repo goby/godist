@@ -1,7 +1,9 @@
-package bufb
+package tranbuf
 
 // DESCRIPTION
-//  Implementation of FIFO buffer using linked list + tailed pointer. Single-threaded operation.
+//  Implementation of FIFO buffer using linked list + tailed pointer.
+//      With single-threaded operation SqeBuffer and thread-safe struct
+//      Buffer(with traditional sync ).
 // FEATURE
 //  NewBuffer: Create a new buffer
 //  Insert: Insert a node into buffer
@@ -93,18 +95,23 @@ func NewBuffer() *Buffer {
 	bp := &Buffer{}
 	bp.sb = NewSeqBuffer()
 	bp.mutex = &sync.Mutex{}
-	bp.cvar = &sync.Cond{}
+	bp.cvar = sync.NewCond(bp.mutex)
 	return bp
 }
 
 func (bp *Buffer) Insert(value interface{}) {
 	bp.mutex.Lock()
 	bp.sb.Insert(value)
+	bp.cvar.Signal()
 	bp.mutex.Unlock()
 }
 
+// Block until some value will be return
 func (bp *Buffer) Remove() (interface{}, error) {
 	bp.mutex.Lock()
+	for bp.sb.Empty() {
+		bp.cvar.Wait()
+	}
 	x, err := bp.sb.Remove()
 	bp.mutex.Unlock()
 	return x, err
