@@ -1,4 +1,8 @@
-package bufb
+package chanbuf
+
+import (
+	"github.com/goby/godist/oldbuf"
+)
 
 // Using go channels
 
@@ -22,7 +26,7 @@ func (m *Mutex) Unlock() {
 
 // ChanBuffer
 type ChanBuffer struct {
-	sb       *SeqBuffer
+	sb       *oldbuf.SeqBuffer
 	ackchan  chan int
 	readchan chan int
 	opchan   chan int
@@ -30,7 +34,7 @@ type ChanBuffer struct {
 
 func NewChanBuffer() *ChanBuffer {
 	bp := new(ChanBuffer)
-	bp.sb = NewSeqBuffer()
+	bp.sb = oldbuf.NewSeqBuffer()
 	bp.ackchan = make(chan int)
 	bp.readchan = make(chan int)
 	bp.opchan = make(chan int)
@@ -54,4 +58,35 @@ func (bp *ChanBuffer) director() {
 		}
 		<-bp.ackchan // Wait until operations completed
 	}
+}
+
+func (bp *ChanBuffer) Insert(value interface{}) {
+	<-bp.opchan
+	bp.sb.Insert(value)
+	bp.ackchan <- 1
+}
+
+func (bp *ChanBuffer) Remove() interface{} {
+	<-bp.readchan
+	x, _ := bp.sb.Remove()
+	bp.ackchan <- 1
+	return x
+}
+
+func (bp *ChanBuffer) Flush() {
+	<-bp.opchan
+	bp.sb.Flush()
+	bp.ackchan <- 1
+}
+
+func (bp *ChanBuffer) Front() interface{} {
+	<-bp.readchan
+	x, _ := bp.sb.Front()
+	bp.ackchan <- 1
+	return x
+}
+
+func (bp *ChanBuffer) Empty() bool {
+	x := bp.sb.Empty()
+	return x
 }

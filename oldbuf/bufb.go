@@ -1,4 +1,4 @@
-package tranbuf
+package oldbuf
 
 // DESCRIPTION
 //  Implementation of FIFO buffer using linked list + tailed pointer.

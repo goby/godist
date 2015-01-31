@@ -1,7 +1,7 @@
-package chanbuf
+package csbuf
 
 import (
-	"github.com/goby/godist/tranbuf"
+	"github.com/goby/godist/oldbuf"
 )
 
 const (
@@ -29,7 +29,7 @@ func NewBuffer() *Buffer {
 }
 
 func (bp *Buffer) runServer() {
-	sb := tranbuf.NewBuffer()
+	sb := oldbuf.NewBuffer()
 	for {
 		var r *request
 		if sb.Empty() {
